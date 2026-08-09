@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schooldesk-v1';
+const CACHE_NAME = 'schooldesk-v2';
 const ASSETS = [
   './',
   './index.html',
