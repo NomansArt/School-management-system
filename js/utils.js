@@ -14,8 +14,8 @@ function formatDate(dateStr) {
 }
 
 function formatCurrency(amount) {
-  if (!amount && amount !== 0) return '₹0';
-  return '₹' + Number(amount).toLocaleString('en-IN');
+  if (!amount && amount !== 0) return 'Rs. 0';
+  return 'Rs. ' + Number(amount).toLocaleString('en-PK');
 }
 
 function showToast(message, type = 'success') {
