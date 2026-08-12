@@ -18,7 +18,12 @@ export async function signIn(email, password, schoolName) {
     password
   });
 
-  if (error) throw error;
+  if (error) {
+    if (error.message.includes('Invalid login credentials')) {
+      throw new Error('Incorrect Email or Password');
+    }
+    throw error;
+  }
 
   // Verify that the logged-in user belongs to the requested school
   const { data: profile, error: profileErr } = await supabase
@@ -30,11 +35,12 @@ export async function signIn(email, password, schoolName) {
   if (profileErr || !profile) {
     // Sign them out if the school name doesn't match
     await supabase.auth.signOut();
-    throw new Error('School name not found or incorrect');
+    throw new Error('Incorrect School Name');
   }
 
-  // Store school_id in the client for later queries
+  // Store school info in the client for later queries and UI
   localStorage.setItem('currentSchoolId', profile.id);
+  localStorage.setItem('currentSchoolName', schoolName);
   
   // Stash a tiny offline-account record (for offline switcher)
   cacheOfflineAccount(authData.user.id, schoolName, profile.id, email);

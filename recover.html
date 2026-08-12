@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SchoolDesk - Recover Account</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body.login-page {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: var(--bg-primary);
+      margin: 0;
+      padding: 20px;
+    }
+    
+    .login-card {
+      background: var(--bg-secondary);
+      padding: 40px 30px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .login-card h1 {
+      margin-top: 0;
+      margin-bottom: 5px;
+      color: var(--text-primary);
+      font-size: 1.8rem;
+    }
+
+    .login-card p {
+      color: var(--text-secondary);
+      margin-bottom: 25px;
+      font-size: 0.95rem;
+    }
+
+    .login-form {
+      text-align: left;
+    }
+
+    .login-form label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .login-form input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+
+    .login-form input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 600;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn.primary {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .btn.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn.secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn.secondary:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .alert {
+      padding: 12px;
+      border-radius: var(--radius-md);
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .alert.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      display: block;
+    }
+    
+    .alert.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      display: block;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .school-name-box {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid var(--accent-primary);
+      padding: 15px;
+      border-radius: var(--radius-md);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .school-name-box strong {
+      color: var(--accent-primary);
+      font-size: 1.2rem;
+      display: block;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body class="login-page">
+
+  <div class="login-card">
+    <h1>Recover Account</h1>
+    <p id="page-subtitle">We will send a code to your email.</p>
+
+    <div id="alert-box" class="alert"></div>
+
+    <!-- Step 1: Request OTP -->
+    <form id="step1-form" class="login-form">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" required placeholder="admin@school.com">
+
+      <div class="action-group">
+        <button type="submit" class="btn primary" id="btn-send">Send Code</button>
+        <button type="button" class="btn secondary" onclick="location.href='login.html'">Back to Login</button>
+      </div>
+    </form>
+
+    <!-- Step 2: Verify OTP -->
+    <form id="step2-form" class="login-form hidden">
+      <label for="code">6-Digit Code from Email</label>
+      <input type="text" id="code" required placeholder="123456" maxlength="6">
+
+      <div class="action-group">
+        <button type="submit" class="btn primary" id="btn-verify">Verify Code</button>
+      </div>
+    </form>
+
+    <!-- Step 3: Update Password -->
+    <form id="step3-form" class="login-form hidden">
+      <div class="school-name-box">
+        Your registered School Name is:
+        <strong id="recovered-school-name">...</strong>
+      </div>
+
+      <label for="new-password">Enter New Password</label>
+      <input type="password" id="new-password" required placeholder="••••••••" minlength="6">
+
+      <div class="action-group">
+        <button type="submit" class="btn primary" id="btn-update">Update Password & Login</button>
+      </div>
+    </form>
+
+  </div>
+
+  <!-- Load Supabase from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script type="module">
+    import { supabase } from "./js/supabase.js";
+
+    const step1Form = document.getElementById('step1-form');
+    const step2Form = document.getElementById('step2-form');
+    const step3Form = document.getElementById('step3-form');
+    const subtitle = document.getElementById('page-subtitle');
+    const alertBox = document.getElementById('alert-box');
+
+    let userEmail = '';
+
+    function showAlert(msg, type) {
+      alertBox.textContent = msg;
+      alertBox.className = 'alert ' + type;
+    }
+
+    function setLoading(btnId, isLoading, defaultText) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = isLoading;
+      btn.textContent = isLoading ? 'Loading...' : defaultText;
+    }
+
+    // Step 1: Request Code
+    step1Form.addEventListener('submit', async e => {
+      e.preventDefault();
+      userEmail = document.getElementById('email').value.trim();
+
+      setLoading('btn-send', true, 'Send Code');
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(userEmail);
+        if (error) throw error;
+        
+        showAlert('Code sent! Check your email inbox and spam folder.', 'success');
+        step1Form.classList.add('hidden');
+        step2Form.classList.remove('hidden');
+        subtitle.textContent = "Enter the 6-digit code we sent you.";
+      } catch (err) {
+        showAlert(err.message, 'error');
+      } finally {
+        setLoading('btn-send', false, 'Send Code');
+      }
+    });
+
+    // Step 2: Verify Code
+    step2Form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const code = document.getElementById('code').value.trim();
+
+      setLoading('btn-verify', true, 'Verify Code');
+      try {
+        const { data, error } = await supabase.auth.verifyOtp({
+          email: userEmail,
+          token: code,
+          type: 'recovery' // important: type must be recovery
+        });
+        
+        if (error) throw error;
+
+        // User is now authenticated. Fetch the school name from metadata
+        const user = data.user;
+        const schoolName = user.user_metadata?.school_name || 'Unknown School';
+        document.getElementById('recovered-school-name').textContent = schoolName;
+
+        showAlert('Code verified successfully!', 'success');
+        step2Form.classList.add('hidden');
+        step3Form.classList.remove('hidden');
+        subtitle.textContent = "Set a new password to continue.";
+      } catch (err) {
+        showAlert(err.message || 'Invalid or expired code.', 'error');
+      } finally {
+        setLoading('btn-verify', false, 'Verify Code');
+      }
+    });
+
+    // Step 3: Update Password
+    step3Form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const newPassword = document.getElementById('new-password').value;
+
+      setLoading('btn-update', true, 'Update Password & Login');
+      try {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+
+        showAlert('Password updated successfully! Redirecting...', 'success');
+        setTimeout(() => {
+          location.href = 'index.html';
+        }, 1500);
+      } catch (err) {
+        showAlert(err.message, 'error');
+        setLoading('btn-update', false, 'Update Password & Login');
+      }
+    });
+  </script>
+</body>
+</html>

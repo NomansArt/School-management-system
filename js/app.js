@@ -63,40 +63,49 @@ function updateNav() {
   bottomNav.style.display = currentSubPage ? 'none' : 'flex';
 }
 
+function setPageTitle(baseTitle) {
+  const titleEl = document.getElementById('page-title');
+  const schoolName = localStorage.getItem('currentSchoolName');
+  if (schoolName) {
+    titleEl.textContent = `${schoolName} - ${baseTitle}`;
+  } else {
+    titleEl.textContent = baseTitle;
+  }
+}
+
 // ─── Page Router ───────────────────────────────
 async function renderPage() {
   const content = document.getElementById('app-content');
-  const title = document.getElementById('page-title');
 
   switch (currentPage) {
     case 'dashboard':
-      title.textContent = 'Dashboard';
+      setPageTitle('Dashboard');
       await renderDashboard(content);
       break;
     case 'students':
       if (currentSubPage === 'view') {
-        title.textContent = 'Student Details';
+        setPageTitle('Student Details');
         await renderStudentDetail(content, currentEditId);
       } else {
-        title.textContent = 'Students';
+        setPageTitle('Students');
         await renderStudentsList(content);
       }
       break;
     case 'fees':
-      title.textContent = 'Fees';
+      setPageTitle('Fees');
       await renderFeesList(content);
       break;
     case 'teachers':
       if (currentSubPage === 'view') {
-        title.textContent = 'Teacher Details';
+        setPageTitle('Teacher Details');
         await renderTeacherDetail(content, currentEditId);
       } else {
-        title.textContent = 'Teachers';
+        setPageTitle('Teachers');
         await renderTeachersList(content);
       }
       break;
     case 'settings':
-      title.textContent = 'Settings';
+      setPageTitle('Settings');
       renderSettings(content);
       break;
   }
