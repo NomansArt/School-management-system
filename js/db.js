@@ -5,7 +5,7 @@
 class SchoolDB {
   constructor() {
     this.dbName = 'SchoolDeskDB';
-    this.dbVersion = 1;
+    this.dbVersion = 2;
     this.db = null;
   }
 
@@ -15,35 +15,45 @@ class SchoolDB {
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
+        const oldVersion = event.oldVersion;
 
-        // Students store
+        // Create stores if they don't exist, or add school_id index if upgrading from v1
         if (!db.objectStoreNames.contains('students')) {
           const store = db.createObjectStore('students', { keyPath: 'id' });
+          store.createIndex('school_id', 'school_id', { unique: false });
           store.createIndex('name', 'name', { unique: false });
           store.createIndex('class', 'class', { unique: false });
           store.createIndex('section', 'section', { unique: false });
+        } else if (oldVersion < 2) {
+          event.target.transaction.objectStore('students').createIndex('school_id', 'school_id', { unique: false });
         }
 
-        // Teachers store
         if (!db.objectStoreNames.contains('teachers')) {
           const store = db.createObjectStore('teachers', { keyPath: 'id' });
+          store.createIndex('school_id', 'school_id', { unique: false });
           store.createIndex('name', 'name', { unique: false });
           store.createIndex('subject', 'subject', { unique: false });
+        } else if (oldVersion < 2) {
+          event.target.transaction.objectStore('teachers').createIndex('school_id', 'school_id', { unique: false });
         }
 
-        // Parents store
         if (!db.objectStoreNames.contains('parents')) {
           const store = db.createObjectStore('parents', { keyPath: 'id' });
+          store.createIndex('school_id', 'school_id', { unique: false });
           store.createIndex('studentId', 'studentId', { unique: false });
           store.createIndex('fatherName', 'fatherName', { unique: false });
+        } else if (oldVersion < 2) {
+          event.target.transaction.objectStore('parents').createIndex('school_id', 'school_id', { unique: false });
         }
 
-        // Fees store
         if (!db.objectStoreNames.contains('fees')) {
           const store = db.createObjectStore('fees', { keyPath: 'id' });
+          store.createIndex('school_id', 'school_id', { unique: false });
           store.createIndex('studentId', 'studentId', { unique: false });
           store.createIndex('status', 'status', { unique: false });
           store.createIndex('date', 'date', { unique: false });
+        } else if (oldVersion < 2) {
+          event.target.transaction.objectStore('fees').createIndex('school_id', 'school_id', { unique: false });
         }
       };
 
@@ -62,12 +72,18 @@ class SchoolDB {
 
   _add(storeName, data) {
     return new Promise((resolve, reject) => {
+      const schoolId = localStorage.getItem('currentSchoolId');
+      if (schoolId) data.school_id = schoolId;
+      
       data.id = generateId();
       data.createdAt = new Date().toISOString();
       const tx = this.db.transaction(storeName, 'readwrite');
       const store = tx.objectStore(storeName);
       const request = store.add(data);
-      request.onsuccess = () => resolve(data.id);
+      request.onsuccess = () => {
+        this._enqueueSync(storeName, 'insert', data);
+        resolve(data.id);
+      };
       request.onerror = (e) => reject(e.target.error);
     });
   }
@@ -84,9 +100,14 @@ class SchoolDB {
 
   _getAll(storeName) {
     return new Promise((resolve, reject) => {
+      const schoolId = localStorage.getItem('currentSchoolId');
+      if (!schoolId) return resolve([]);
+
       const tx = this.db.transaction(storeName, 'readonly');
       const store = tx.objectStore(storeName);
-      const request = store.getAll();
+      const index = store.index('school_id');
+      const range = IDBKeyRange.only(schoolId);
+      const request = index.getAll(range);
       request.onsuccess = () => resolve(request.result || []);
       request.onerror = (e) => reject(e.target.error);
     });
@@ -96,11 +117,16 @@ class SchoolDB {
     return new Promise(async (resolve, reject) => {
       const existing = await this._get(storeName, id);
       if (!existing) return reject(new Error('Record not found'));
-      const updated = { ...existing, ...data, id: existing.id, createdAt: existing.createdAt };
+      const schoolId = localStorage.getItem('currentSchoolId');
+      
+      const updated = { ...existing, ...data, id: existing.id, createdAt: existing.createdAt, school_id: schoolId };
       const tx = this.db.transaction(storeName, 'readwrite');
       const store = tx.objectStore(storeName);
       const request = store.put(updated);
-      request.onsuccess = () => resolve();
+      request.onsuccess = () => {
+        this._enqueueSync(storeName, 'update', updated);
+        resolve();
+      };
       request.onerror = (e) => reject(e.target.error);
     });
   }
@@ -110,20 +136,40 @@ class SchoolDB {
       const tx = this.db.transaction(storeName, 'readwrite');
       const store = tx.objectStore(storeName);
       const request = store.delete(id);
-      request.onsuccess = () => resolve();
+      request.onsuccess = () => {
+        this._enqueueSync(storeName, 'delete', { id });
+        resolve();
+      };
       request.onerror = (e) => reject(e.target.error);
     });
   }
 
   _getByIndex(storeName, indexName, value) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const tx = this.db.transaction(storeName, 'readonly');
       const store = tx.objectStore(storeName);
       const index = store.index(indexName);
       const request = index.getAll(value);
-      request.onsuccess = () => resolve(request.result || []);
+      request.onsuccess = () => {
+        const schoolId = localStorage.getItem('currentSchoolId');
+        // Client side filter to ensure it belongs to this school
+        const filtered = (request.result || []).filter(item => item.school_id === schoolId);
+        resolve(filtered);
+      };
       request.onerror = (e) => reject(e.target.error);
     });
+  }
+
+  // ─── Sync Queue ──────────────────────────────
+  _enqueueSync(type, operation, payload) {
+    const q = JSON.parse(localStorage.getItem('syncQueue') || '[]');
+    q.push({ type, operation, payload });
+    localStorage.setItem('syncQueue', JSON.stringify(q));
+    
+    // Try to flush immediately if online
+    if (navigator.onLine) {
+      window.flushSyncQueue();
+    }
   }
 
   // ─── Students ────────────────────────────────
@@ -281,3 +327,45 @@ class SchoolDB {
 
 // Global singleton
 const db = new SchoolDB();
+window.db = db;
+
+// Sync logic
+window.flushSyncQueue = async function() {
+  if (!navigator.onLine) return;
+  // Make sure supabase is loaded
+  if (!window.supabase) return; 
+
+  const q = JSON.parse(localStorage.getItem('syncQueue') || '[]');
+  if (q.length === 0) return;
+
+  const newQ = [];
+  
+  // We need the supabase client. Since db.js is a classic script, we can't import supabase directly if it's a module.
+  // But wait, the supabase SDK is loaded from CDN as window.supabase.
+  // However, the configured client is in js/supabase.js
+  // Let's assume we can import it dynamically.
+  
+  try {
+    const { supabase } = await import('./supabase.js');
+    for (const act of q) {
+      try {
+        const { type, operation, payload } = act;
+        if (operation === 'insert') {
+          await supabase.from(type).insert(payload);
+        } else if (operation === 'update') {
+          await supabase.from(type).update(payload).eq('id', payload.id);
+        } else if (operation === 'delete') {
+          await supabase.from(type).delete().eq('id', payload.id);
+        }
+      } catch (e) {
+        console.error('Sync failed for', act, e);
+        newQ.push(act); // keep failed actions
+      }
+    }
+    localStorage.setItem('syncQueue', JSON.stringify(newQ));
+  } catch (err) {
+    console.error('Could not load supabase client to flush sync queue', err);
+  }
+};
+
+window.addEventListener('online', window.flushSyncQueue);
