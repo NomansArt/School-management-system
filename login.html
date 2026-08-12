@@ -211,7 +211,14 @@
 
       setLoading(true);
       try {
-        await signUp(email, pwd, school);
+        const authData = await signUp(email, pwd, school);
+        
+        if (!authData.session) {
+          showAlert('Account created! Please check your email to confirm before logging in.', 'success');
+          setLoading(false);
+          return;
+        }
+
         showAlert('Account created! Logging you in...', 'success');
         setTimeout(() => {
             location.href = "index.html";

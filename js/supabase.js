@@ -75,7 +75,7 @@ export async function signUp(email, password, schoolName) {
   // Store the school_id locally for later use
   localStorage.setItem('currentSchoolId', school.id);
   cacheOfflineAccount(authData.user.id, schoolName, school.id, email);
-  return authData.user;
+  return authData;
 }
 
 /* -------------------------------------------------------------
