@@ -151,28 +151,18 @@
 
   <div class="login-card">
     <h1>Recover Account</h1>
-    <p id="page-subtitle">We will send a code to your email.</p>
+    <p id="page-subtitle">We will send a recovery link to your email.</p>
 
     <div id="alert-box" class="alert"></div>
 
-    <!-- Step 1: Request OTP -->
+    <!-- Step 1: Request Link -->
     <form id="step1-form" class="login-form">
       <label for="email">Email Address</label>
       <input type="email" id="email" required placeholder="admin@school.com">
 
       <div class="action-group">
-        <button type="submit" class="btn primary" id="btn-send">Send Code</button>
+        <button type="submit" class="btn primary" id="btn-send">Send Recovery Link</button>
         <button type="button" class="btn secondary" onclick="location.href='login.html'">Back to Login</button>
-      </div>
-    </form>
-
-    <!-- Step 2: Verify OTP -->
-    <form id="step2-form" class="login-form hidden">
-      <label for="code">6-Digit Code from Email</label>
-      <input type="text" id="code" required placeholder="123456" maxlength="6">
-
-      <div class="action-group">
-        <button type="submit" class="btn primary" id="btn-verify">Verify Code</button>
       </div>
     </form>
 
@@ -200,12 +190,9 @@
     import { supabase } from "./js/supabase.js";
 
     const step1Form = document.getElementById('step1-form');
-    const step2Form = document.getElementById('step2-form');
     const step3Form = document.getElementById('step3-form');
     const subtitle = document.getElementById('page-subtitle');
     const alertBox = document.getElementById('alert-box');
-
-    let userEmail = '';
 
     function showAlert(msg, type) {
       alertBox.textContent = msg;
@@ -218,57 +205,41 @@
       btn.textContent = isLoading ? 'Loading...' : defaultText;
     }
 
-    // Step 1: Request Code
-    step1Form.addEventListener('submit', async e => {
-      e.preventDefault();
-      userEmail = document.getElementById('email').value.trim();
-
-      setLoading('btn-send', true, 'Send Code');
-      try {
-        const { error } = await supabase.auth.resetPasswordForEmail(userEmail);
-        if (error) throw error;
-        
-        showAlert('Code sent! Check your email inbox and spam folder.', 'success');
-        step1Form.classList.add('hidden');
-        step2Form.classList.remove('hidden');
-        subtitle.textContent = "Enter the 6-digit code we sent you.";
-      } catch (err) {
-        showAlert(err.message, 'error');
-      } finally {
-        setLoading('btn-send', false, 'Send Code');
-      }
-    });
-
-    // Step 2: Verify Code
-    step2Form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const code = document.getElementById('code').value.trim();
-
-      setLoading('btn-verify', true, 'Verify Code');
-      try {
-        const { data, error } = await supabase.auth.verifyOtp({
-          email: userEmail,
-          token: code,
-          type: 'recovery' // important: type must be recovery
-        });
-        
-        if (error) throw error;
-
-        // User is now authenticated. Fetch the school name from metadata
-        const user = data.user;
-        const schoolName = user.user_metadata?.school_name || 'Unknown School';
+    // Detect if the user arrived via the magic link
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        const schoolName = session?.user?.user_metadata?.school_name || 'Unknown School';
         document.getElementById('recovered-school-name').textContent = schoolName;
 
-        showAlert('Code verified successfully!', 'success');
-        step2Form.classList.add('hidden');
+        step1Form.classList.add('hidden');
         step3Form.classList.remove('hidden');
         subtitle.textContent = "Set a new password to continue.";
-      } catch (err) {
-        showAlert(err.message || 'Invalid or expired code.', 'error');
-      } finally {
-        setLoading('btn-verify', false, 'Verify Code');
+        showAlert('Link verified! Please set your new password below.', 'success');
       }
     });
+
+    // Step 1: Request Link
+    step1Form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const userEmail = document.getElementById('email').value.trim();
+
+      setLoading('btn-send', true, 'Sending...');
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+          redirectTo: window.location.href // Send them back to this exact page
+        });
+        if (error) throw error;
+        
+        showAlert('Link sent! Check your email inbox (and spam folder) and click the link.', 'success');
+        step1Form.querySelector('input').disabled = true;
+        document.getElementById('btn-send').disabled = true;
+      } catch (err) {
+        showAlert(err.message, 'error');
+        setLoading('btn-send', false, 'Send Recovery Link');
+      }
+    });
+
+
 
     // Step 3: Update Password
     step3Form.addEventListener('submit', async e => {
