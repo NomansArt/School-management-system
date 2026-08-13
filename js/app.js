@@ -33,8 +33,13 @@ const ICONS = {
 async function initApp() {
   await db.init();
   loadTheme();
-  navigate('dashboard');
+  window.renderPage = renderPage;
+  await renderPage();
+  if (window.syncFromSupabase) {
+    window.syncFromSupabase();
+  }
 }
+
 
 // ─── Navigation ────────────────────────────────
 function navigate(page, subPage = null, id = null) {

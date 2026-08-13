@@ -368,4 +368,54 @@ window.flushSyncQueue = async function() {
   }
 };
 
-window.addEventListener('online', window.flushSyncQueue);
+window.syncFromSupabase = async function() {
+  if (!navigator.onLine) return;
+  const schoolId = localStorage.getItem('currentSchoolId');
+  if (!schoolId) return;
+
+  try {
+    const { supabase } = await import('./supabase.js');
+
+    // Flush offline changes first
+    await window.flushSyncQueue();
+
+    const stores = ['students', 'teachers', 'parents', 'fees'];
+    let updatedAny = false;
+
+    for (const storeName of stores) {
+      const { data, error } = await supabase
+        .from(storeName)
+        .select('*')
+        .eq('school_id', schoolId);
+
+      if (error) {
+        console.error(`Error fetching ${storeName} from Supabase:`, error);
+        continue;
+      }
+
+      if (data && data.length > 0) {
+        updatedAny = true;
+        await new Promise((resolve, reject) => {
+          const tx = db.db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          data.forEach(item => store.put(item));
+          tx.oncomplete = () => resolve();
+          tx.onerror = (e) => reject(e.target.error);
+        });
+      }
+    }
+
+    // Refresh UI if function is available
+    if (updatedAny && typeof window.renderPage === 'function') {
+      window.renderPage();
+    }
+  } catch (err) {
+    console.error('Failed to sync from Supabase:', err);
+  }
+};
+
+window.addEventListener('online', () => {
+  window.flushSyncQueue();
+  window.syncFromSupabase();
+});
+

@@ -147,6 +147,9 @@
         location.href = "login.html";
       } else {
         document.getElementById('app').style.display = 'flex';
+        if (window.syncFromSupabase) {
+          window.syncFromSupabase();
+        }
       }
     };
     
