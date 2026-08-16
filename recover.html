@@ -223,16 +223,20 @@
       e.preventDefault();
       const userEmail = document.getElementById('email').value.trim();
 
-      setLoading('btn-send', true, 'Sending...');
+      setLoading('btn-send', true, 'Send Recovery Link');
       try {
+        // Ensure redirect URL starts with explicit origin
+        const redirectUrl = window.location.origin + window.location.pathname;
         const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
-          redirectTo: window.location.href // Send them back to this exact page
+          redirectTo: redirectUrl
         });
         if (error) throw error;
         
         showAlert('Link sent! Check your email inbox (and spam folder) and click the link.', 'success');
         step1Form.querySelector('input').disabled = true;
-        document.getElementById('btn-send').disabled = true;
+        const btn = document.getElementById('btn-send');
+        btn.disabled = true;
+        btn.textContent = 'Link Sent!';
       } catch (err) {
         showAlert(err.message, 'error');
         setLoading('btn-send', false, 'Send Recovery Link');
