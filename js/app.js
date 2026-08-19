@@ -70,11 +70,12 @@ function updateNav() {
 
 function setPageTitle(baseTitle) {
   const titleEl = document.getElementById('page-title');
-  const schoolName = localStorage.getItem('currentSchoolName');
-  if (schoolName) {
-    titleEl.textContent = `${schoolName} - ${baseTitle}`;
-  } else {
-    titleEl.textContent = baseTitle;
+  titleEl.textContent = `${baseTitle} -`;
+  
+  const headerSchoolNameEl = document.getElementById('header-school-name');
+  if (headerSchoolNameEl) {
+    const schoolName = localStorage.getItem('currentSchoolName') || 'SchoolDesk';
+    headerSchoolNameEl.textContent = schoolName;
   }
 }
 
@@ -716,6 +717,19 @@ function renderSettings(container) {
           </label>
         </div>
 
+        <div class="settings-item" onclick="changeSchoolName()">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:rgba(245,158,11,0.15);color:var(--accent-warning)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <div class="settings-item-info">
+              <h3>Change School Name</h3>
+              <p>Update the display name of your school</p>
+            </div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+
         <div class="settings-item" onclick="exportData()">
           <div class="settings-item-left">
             <div class="settings-icon" style="background:rgba(16,185,129,0.15);color:var(--accent-success)">
@@ -1255,6 +1269,18 @@ function updateThemeIcon() {
 // ═══════════════════════════════════════════════
 // SETTINGS FUNCTIONS
 // ═══════════════════════════════════════════════
+async function changeSchoolName() {
+  const currentName = localStorage.getItem('currentSchoolName') || 'SchoolDesk';
+  const newName = prompt('Enter new school name:', currentName);
+  
+  if (newName !== null && newName.trim() !== '') {
+    localStorage.setItem('currentSchoolName', newName.trim());
+    // Refresh the page title/header immediately
+    setPageTitle(currentPage.charAt(0).toUpperCase() + currentPage.slice(1));
+    showToast('School name updated successfully', 'success');
+  }
+}
+
 async function exportData() {
   try {
     const data = await db.exportData();
