@@ -768,6 +768,31 @@ function renderSettings(container) {
           </div>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
+        <div class="settings-item mobile-only" onclick="window.showAccountSwitcher && window.showAccountSwitcher()">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:rgba(59,130,246,0.15);color:#3B82F6">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <div class="settings-item-info">
+              <h3>Switch Account</h3>
+              <p>Change to a different school</p>
+            </div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+
+        <div class="settings-item mobile-only" onclick="window.logout && window.logout()">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:rgba(239,68,68,0.15);color:var(--accent-danger)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </div>
+            <div class="settings-item-info">
+              <h3 style="color:var(--accent-danger)">Log Out</h3>
+              <p>Sign out of this device</p>
+            </div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
       </div>
 
       <!-- About -->
@@ -1261,10 +1286,8 @@ function loadTheme() {
 
 function updateThemeIcon() {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  const darkIcon = document.getElementById('theme-icon-dark');
-  const lightIcon = document.getElementById('theme-icon-light');
-  if (darkIcon) darkIcon.style.display = isLight ? 'none' : 'block';
-  if (lightIcon) lightIcon.style.display = isLight ? 'block' : 'none';
+  document.querySelectorAll('.theme-icon-dark').forEach(el => el.style.display = isLight ? 'none' : 'block');
+  document.querySelectorAll('.theme-icon-light').forEach(el => el.style.display = isLight ? 'block' : 'none');
 }
 
 // ═══════════════════════════════════════════════
