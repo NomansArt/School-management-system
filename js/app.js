@@ -70,13 +70,11 @@ function updateNav() {
 
 function setPageTitle(baseTitle) {
   const titleEl = document.getElementById('page-title');
-  titleEl.textContent = baseTitle;
+  if (titleEl) titleEl.textContent = baseTitle;
   
-  const headerSchoolNameEl = document.getElementById('header-school-name');
-  if (headerSchoolNameEl) {
-    const schoolName = localStorage.getItem('currentSchoolName') || 'SchoolDesk';
-    headerSchoolNameEl.textContent = schoolName;
-  }
+  const schoolNameElements = document.querySelectorAll('.school-name-display');
+  const schoolName = localStorage.getItem('currentSchoolName') || 'SchoolDesk';
+  schoolNameElements.forEach(el => el.textContent = schoolName);
 }
 
 // ─── Page Router ───────────────────────────────

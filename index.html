@@ -22,24 +22,26 @@
 
 
     <!-- Header -->
-    <header class="app-header" style="position: relative; justify-content: center; display: flex; align-items: center; width: 100%;">
+    <header class="app-header">
       <!-- Left side items -->
-      <div class="header-left" style="position: absolute; left: 16px;">
+      <div class="header-left" style="display: flex; align-items: center; gap: 8px;">
         <button class="back-btn" id="back-btn" style="display:none" onclick="goBack()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/>
           </svg>
         </button>
+        <!-- School Name on Mobile (Hidden on Desktop) -->
+        <div class="mobile-only school-name-display" style="font-size: 1.15rem; font-weight: 800; color: var(--accent-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65vw; letter-spacing: 0.5px;">SchoolDesk</div>
       </div>
 
-      <!-- Center item -->
-      <div class="header-center" style="display: flex; align-items: center; text-align: center;">
-        <div id="header-school-name" style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50vw; letter-spacing: 0.5px;">SchoolDesk</div>
+      <!-- Center item (Desktop only) -->
+      <div class="header-center desktop-only" style="display: flex; align-items: center; text-align: center; position: absolute; left: 50%; transform: translateX(-50%);">
+        <div class="school-name-display" style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50vw; letter-spacing: 0.5px;">SchoolDesk</div>
         <h1 id="page-title" style="display:none;"></h1>
       </div>
 
       <!-- Right side items -->
-      <div class="header-right" style="position: absolute; right: 16px; display: flex; gap: 8px;">
+      <div class="header-right" style="display: flex; gap: 8px;">
         <button class="header-action theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
           <svg class="theme-icon-dark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
