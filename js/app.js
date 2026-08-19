@@ -775,7 +775,8 @@ function renderSettings(container) {
         <div class="about-logo">S</div>
         <div class="about-name">SchoolDesk</div>
         <div class="about-version">Version 1.0.0</div>
-        <div class="about-desc">A modern school management app for tracking students, fees, parents & teachers.</div>
+        <div class="about-developer" style="margin-top: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; color: var(--accent-primary);">DEVELOPED BY NOMAN SHAIKH</div>
+        <div class="about-desc" style="margin-top: 12px;">A modern school management app for tracking students, fees, parents & teachers.</div>
       </div>
     </div>
   `;
