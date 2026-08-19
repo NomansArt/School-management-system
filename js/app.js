@@ -70,7 +70,7 @@ function updateNav() {
 
 function setPageTitle(baseTitle) {
   const titleEl = document.getElementById('page-title');
-  titleEl.textContent = `${baseTitle} -`;
+  titleEl.textContent = baseTitle;
   
   const headerSchoolNameEl = document.getElementById('header-school-name');
   if (headerSchoolNameEl) {
