@@ -1274,8 +1274,20 @@ async function changeSchoolName() {
   const currentName = localStorage.getItem('currentSchoolName') || 'SchoolDesk';
   const newName = prompt('Enter new school name:', currentName);
   
-  if (newName !== null && newName.trim() !== '') {
-    localStorage.setItem('currentSchoolName', newName.trim());
+  if (newName !== null && newName.trim() !== '' && newName.trim() !== currentName) {
+    const finalName = newName.trim();
+    
+    // Attempt remote update first if function is available
+    if (window.updateSchoolName) {
+      showToast('Updating school name...', 'info');
+      const success = await window.updateSchoolName(finalName);
+      if (!success) {
+        showToast('Failed to update school name. Name might be taken.', 'error');
+        return;
+      }
+    }
+    
+    localStorage.setItem('currentSchoolName', finalName);
     // Refresh the page title/header immediately
     setPageTitle(currentPage.charAt(0).toUpperCase() + currentPage.slice(1));
     showToast('School name updated successfully', 'success');

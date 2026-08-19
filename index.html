@@ -136,6 +136,32 @@
     };
     window.showAccountSwitcher = showAccountSwitcher;
 
+    window.updateSchoolName = async (newName) => {
+      const schoolId = localStorage.getItem('currentSchoolId');
+      if (!schoolId) return false;
+      const { error } = await supabase.from('schools').update({ name: newName }).eq('id', schoolId);
+      if (error) {
+        console.error('Error updating school name:', error);
+        return false;
+      }
+      
+      // Update auth user metadata
+      await supabase.auth.updateUser({
+        data: { school_name: newName }
+      });
+      
+      // Update offline accounts cache
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const accounts = JSON.parse(localStorage.getItem('offlineAccounts') || '{}');
+        if (accounts[user.id]) {
+          accounts[user.id].schoolName = newName;
+          localStorage.setItem('offlineAccounts', JSON.stringify(accounts));
+        }
+      }
+      return true;
+    };
+
     // Check Session
     const checkSession = async () => {
       const storedSchoolId = localStorage.getItem('currentSchoolId');
